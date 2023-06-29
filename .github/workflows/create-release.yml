@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Create release
+
+on:
+  push:
+    tags:
+      - "*"
+
+env:
+  CI_DIR: 27a56f64-e0cd-4b94-94e7-93a6a05483d1
+
+jobs:
+  create-release:
+    name: Create release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
+      - name: Build
+        id: build
+        uses: ./.github/actions/build
+        with:
+          targets: |
+            x86_64-unknown-linux-gnu
+            x86_64-unknown-linux-musl
+            x86_64-pc-windows-gnu
+            x86_64-apple-darwin
+            aarch64-apple-darwin
+            aarch64-unknown-linux-gnu
+            aarch64-unknown-linux-musl
+
+      - name: Prepare artifacts
+        env:
+          BUILD_ARTIFACTS: ${{ join(fromJSON(steps.build.outputs.artifacts).*, fromJSON('"\n"')) }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$CI_DIR"
+          readarray -t artifacts <<< "$BUILD_ARTIFACTS"
+          for artifact in "${artifacts[@]}"; do
+            [[ -z "$artifact" ]] && continue
+            # convert `/path/to/target/x86_64-pc-windows-gnu/release/BIN.exe`
+            # to `BIN-x86_64-pc-windows-gnu.exe`
+            bin_name="$(sed -E 's:(.*/)*(.*?)/(.*?)/([^.]*)(\..+)?$:\4-\2\5:' <<< "$artifact")"
+            cp "$artifact" "$CI_DIR/$bin_name"
+          done
+
+      - name: Create GitHub release
+        uses: notpeelz/action-gh-create-release@c1bebd17c8a128e8db4165a68be4dc4e3f106ff1 # v5.0.1
+        with:
+          strategy: use-existing-tag
+          tag: ${{ github.ref_name }}
+          title: ${{ github.ref_name }}
+          body: ${{ github.ref_name }}
+          files: |
+            ${{ env.CI_DIR }}/*

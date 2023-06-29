@@ -1,0 +1,7 @@
+hard_tabs = false
+tab_spaces = 2
+max_width = 80
+match_block_trailing_comma = true
+# Force chained calls to wrap over multiple lines if it exceeds 50% of the max line width
+chain_width = 50
+reorder_imports = true

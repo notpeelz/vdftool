@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+
+name: "Build"
+description: "Build"
+
+inputs:
+  dir:
+    description: |
+      The path to the Rust project
+    required: false
+    default: .
+  targets:
+    description: |
+      A newline-separated list of the targets to build
+    required: true
+
+outputs:
+  artifacts:
+    description: "A map of (target, path-to-artifact)"
+    value: ${{ steps.build.outputs.artifacts }}
+
+runs:
+  using: composite
+  steps:
+    - id: build
+      shell: bash
+      env:
+        PROJECT_DIR: ${{ inputs.dir }}
+        BUILD_TARGETS: ${{ inputs.targets }}
+      run: |
+        ./.github/actions/build/build.sh

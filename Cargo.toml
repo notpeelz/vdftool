@@ -1,0 +1,23 @@
+[package]
+name = "vdftool"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+
+[dependencies]
+clap = { version = "4.3.8", features = ["cargo"] }
+eyre = { version = "0.6.8", default-features = false }
+keyvalues-serde = "0.1.0"
+serde = "1.0.164"
+serde_json = "1.0.99"
+simple-eyre = "0.3.1"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.147"
+
+[profile.release]
+strip = true
+lto = true
+opt-level = "z"
+codegen-units = 1
+panic = "abort"
